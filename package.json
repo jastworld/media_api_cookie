@@ -1,0 +1,26 @@
+{
+  "name": "node_media",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "cassandra-driver": "^3.4.1",
+    "cookie-parser": "^1.4.3",
+    "express": "^4.16.3",
+    "jsonwebtoken": "^8.2.1",
+    "mc": "^1.0.6",
+    "multer": "^1.3.0",
+    "pm2": "^2.10.2",
+    "triple-beam": "^1.1.0",
+    "winston": "^3.0.0-rc4",
+    "winston-syslog": "^2.0.0",
+    "winston-transport": "^3.1.0"
+  }
+}
