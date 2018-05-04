@@ -37,6 +37,7 @@ app.post('/addmedia', verifyToken, deposit.single('content'), function(req, res)
 	//console.log(req.buffer);
 	var ID = time_uuid.now();
 	//console.log(req.file.buffer);
+	/*
 	mc_client.add(ID, req.file.buffer, {exptime: 60}, function (err) {
 		if (err) {
 			logger.err(err);
@@ -45,17 +46,31 @@ app.post('/addmedia', verifyToken, deposit.single('content'), function(req, res)
 			return res.json({status: "OK", id: ID });
 		};
 	});
+	*/
+	image = req.file.buffer;
+	const query = 'INSERT INTO media (id, image, ttlState) VALUES (?,?,?) USING TTL 60';
+	const params = [ID, image,true]
+	client.execute(query, params, {prepare: true}, function(err, result){
+		if(err){
+			logger.error(err);
+                        return res.json({status: "error", error: err });
+		}else{
+			return res.json({status: "OK", id: ID });
+		}
+	});
 });
 
 app.get('/insertmedia/:mediaid', function(req, res) {
 	var ID = req.params.mediaid;
 	console.log(ID);
+	/*
 	mc_client.get(ID, function (err, image) {
         if (err) {
 			logger.error(err);
 			return res.json({status: "ERROR", error: err});
 		} else {
 			image = image[ID].buffer;
+			logger.error(image.byteLength);
 			const query = 'INSERT INTO media (id, image) VALUES (?,?)';
 			const params = [ID, image]
 			client.execute(query, params, {prepare: true}, function(err, result) {
@@ -68,11 +83,39 @@ app.get('/insertmedia/:mediaid', function(req, res) {
 				}
 			});
 		};
+	});*/
+        const query = 'SELECT image FROM media WHERE id = ?';
+	const param =[ID];
+	client.execute(query,param,{prepare: true},function(err,result){
+		const query = "UPDATE media USING TTL 0 SET ttlState = ?, image = ? WHERE id = ? ";
+		//const query = 'INSERT INTO media (id, image, ttlState)';
+		if(err || result.rows[0].image == null){
+			// console.log(err);
+			logger.error(err);
+                        return res.json({status: "ERROR", error: err });
+		}
+		else{
+			const param = [false, result.rows[0].image,  ID];
+			client.execute(query, param, {prepare: true}, function(err, result) {
+				if (err) {
+					console.log(err);
+                			logger.error(err);
+                        		return res.json({status: "ERROR", error: err });
+				} else {
+					console.log("HERE");
+                        //logger.info("inserted media" + ID);
+                        		return res.json({status : "OK", id: ID});
+	
+                		}
+       			});
+		}
 	});
+
 });
 
 app.get('/media/:mediaId', function(req, res) {
 	var mediaID = req.params.mediaId;
+	logger.error(mediaID);
 	const query = 'SELECT image FROM media WHERE id = ?';
 	const params = [mediaID];
 	client.execute(query, params, {prepare: true}, function(err, result) {
@@ -94,7 +137,6 @@ app.get('/media/:mediaId', function(req, res) {
 //app.use(bodyParser.urlencoded({ extended:true }));
 //require('./app/routes')(app, time_uuid, logger, client, deposit, mime, multer, storage);
 app.listen(port, () => {
-    logger.info('Started tweet MS');
-    //console.log("Running on port " + port);
+    logger.info('Started media MS');
 });
 
